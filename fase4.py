@@ -1,3 +1,5 @@
+#Juan Fernando Esparza Vera
+
 # Importa la librería para registrar eventos y errores en un archivo de texto (logs)
 import logging
 
@@ -16,7 +18,6 @@ from tkinter import messagebox, ttk
 # ----------------------------------------------------------------------
 # Configuración del Sistema de Logs (Guarda eventos y errores en archivo)
 # ----------------------------------------------------------------------
-# Configura el archivo 'app_errors.log' para registrar todo lo que pase en el sistema
 logging.basicConfig(
     filename="app_errors.log",
     level=logging.INFO,
@@ -24,8 +25,7 @@ logging.basicConfig(
     encoding="utf-8",
 )
 
-# Escribe un mensaje inicial en el archivo de logs indicando que el programa arrancó
-logging.info("=== Inicio del Sistema Software FJ ===")
+logging.info("=== Inicio del Sistema Software FJ (Actualizado) ===")
 
 
 # ----------------------------------------------------------------------
@@ -55,7 +55,7 @@ class ReservaError(SistemaFJError):
 class EntidadBase(ABC):
     """Clase abstracta base que obliga a tener un ID numérico en las entidades."""
 
-    def _init_(self, id_entidad: int):
+    def __init__(self, id_entidad: int):
         self._id_entidad = id_entidad  # Guarda el identificador único interno
 
     @property
@@ -67,8 +67,8 @@ class EntidadBase(ABC):
 class Cliente(EntidadBase):
     """Clase que maneja los datos personales del cliente y su encapsulación."""
 
-    def _init_(self, id_cliente: int, nombre: str = "", documento: str = ""):
-        super()._init_(id_cliente)  # Hereda el ID de la clase base
+    def __init__(self, id_cliente: int, nombre: str = "", documento: str = ""):
+        super().__init__(id_cliente)  # Hereda el ID de la clase base
         self.nombre = nombre  # Asigna el nombre usando el método 'setter'
         self.documento = documento  # Asigna el documento usando su 'setter'
 
@@ -79,7 +79,7 @@ class Cliente(EntidadBase):
 
     @nombre.setter
     def nombre(self, valor: str):
-        """Valida que si el cliente no escribe nada, se guarde como 'Cliente Anónimo' (Cliente Opcional)."""
+        """Valida que si el cliente no escribe nada, se guarde como 'Cliente Anónimo'."""
         self._nombre = valor.strip() if valor else "Cliente Anónimo"
 
     @property
@@ -92,7 +92,7 @@ class Cliente(EntidadBase):
         """Valida el documento; si está vacío, coloca 'S/N' (Sin Número)."""
         self._documento = valor.strip() if valor else "S/N"
 
-    def _str_(self):
+    def __str__(self):
         """Devuelve una representación en texto amigable del cliente."""
         return (
             f"{self._nombre} (Doc: {self._documento})"
@@ -104,9 +104,9 @@ class Cliente(EntidadBase):
 class Servicio(ABC):
     """Clase abstracta Servicio (Polimorfismo y Abstracción)."""
 
-    def _init_(self, nombre_servicio: str, precio_base: float):
+    def __init__(self, nombre_servicio: str, precio_base: float):
         self._nombre_servicio = nombre_servicio  # Nombre descriptivo del servicio
-        self._precio_base = precio_base  # Costo base por unidad (hora, día, etc.)
+        self._precio_base = precio_base  # Costo base por unidad
 
     @property
     def nombre_servicio(self):
@@ -120,104 +120,110 @@ class Servicio(ABC):
 
     @abstractmethod
     def calcular_costo(self, *args, **kwargs) -> float:
-        """Método abstracto obligatorio: cada servicio calculará su costo diferente."""
+        """Método abstracto obligatorio."""
         pass
 
     @abstractmethod
     def obtener_descripcion(self) -> str:
-        """Método abstracto obligatorio: describe los detalles específicos del servicio."""
+        """Método abstracto obligatorio."""
         pass
 
 
 class ReservaSala(Servicio):
-    """Servicio 1: Hereda de Servicio para la reserva de salas."""
+    """Servicio 1: Reserva de salas."""
 
-    def _init_(self, numero_sala: str, horas: int, tarifa_hora: float = 25000.0):
-        super()._init_(
-            "Reserva de Sala", tarifa_hora
-        )  # Inicializa la clase padre
+    def __init__(self, numero_sala: str, horas: int, tarifa_hora: float = 25000.0):
+        super().__init__("Reserva de Sala", tarifa_hora)
         if horas <= 0:
-            raise ValidacionError(
-                "Las horas de reserva deben ser mayores a 0."
-            )  # Valida datos
-        self.numero_sala = numero_sala  # Guarda la sala elegida
-        self.horas = horas  # Guarda el número de horas
+            raise ValidacionError("Las horas de reserva deben ser mayores a 0.")
+        self.numero_sala = numero_sala
+        self.horas = horas
 
     def calcular_costo(self, descuento: float = 0.0) -> float:
-        """Calcula el costo total multiplicando la tarifa por las horas (con opción de descuento)."""
         costo_total = self.precio_base * self.horas
         return costo_total * (1 - descuento)
 
     def obtener_descripcion(self) -> str:
-        """Retorna los detalles particulares de la sala."""
         return f"Sala: {self.numero_sala} | Horas: {self.horas}"
 
 
 class AlquilerEquipos(Servicio):
-    """Servicio 2: Hereda de Servicio para el alquiler de equipos tecnológicos."""
+    """Servicio 2: Alquiler de equipos tecnológicos."""
 
-    def _init_(
+    def __init__(
         self, tipo_equipo: str, cantidad: int, tarifa_diaria: float = 40000.0
     ):
-        super()._init_("Alquiler de Equipos", tarifa_diaria)
+        super().__init__("Alquiler de Equipos", tarifa_diaria)
         if cantidad <= 0:
             raise ValidacionError("La cantidad de equipos debe ser mayor a 0.")
         self.tipo_equipo = tipo_equipo
         self.cantidad = cantidad
 
     def calcular_costo(self, dias: int = 1, descuento: float = 0.0) -> float:
-        """Calcula el costo total multiplicando tarifa, cantidad y días."""
         costo_total = self.precio_base * self.cantidad * dias
         return costo_total * (1 - descuento)
 
     def obtener_descripcion(self) -> str:
-        """Retorna los detalles particulares del equipo."""
         return f"Equipo: {self.tipo_equipo} | Cantidad: {self.cantidad}"
 
 
 class AsesoriaEspecializada(Servicio):
-    """Servicio 3: Hereda de Servicio para asesorías profesionales."""
+    """Servicio 3: Asesorías profesionales."""
 
-    def _init_(
+    def __init__(
         self, area: str, horas_asesoria: int, tarifa_hora: float = 60000.0
     ):
-        super()._init_("Asesoría Especializada", tarifa_hora)
+        super().__init__("Asesoría Especializada", tarifa_hora)
         if horas_asesoria <= 0:
             raise ValidacionError("Las horas de asesoría deben ser mayores a 0.")
         self.area = area
         self.horas_asesoria = horas_asesoria
 
     def calcular_costo(self, incluye_informe: bool = False) -> float:
-        """Calcula el costo por horas con un posible recargo por informe opcional."""
         costo_total = self.precio_base * self.horas_asesoria
         if incluye_informe:
             costo_total += 20000.0
         return costo_total
 
     def obtener_descripcion(self) -> str:
-        """Retorna los detalles de la asesoría."""
         return f"Área: {self.area} | Horas: {self.horas_asesoria}"
 
 
-class Reserva(EntidadBase):
-    """Clase que une al Cliente, el Servicio, la fecha y el estado de la reserva."""
+class MantenimientoPreventivo(Servicio):
+    """Servicio 4 (NUEVO): Gestión de soporte y mantenimiento técnico."""
 
-    def _init_(
+    def __init__(
+        self, equipo_mtto: str, nivel_prioridad: str, tarifa_fija: float = 90000.0
+    ):
+        super().__init__("Mantenimiento Preventivo", tarifa_fija)
+        self.equipo_mtto = equipo_mtto
+        self.nivel_prioridad = nivel_prioridad
+
+    def calcular_costo(self) -> float:
+        # Recargo extra si la prioridad es Alta
+        recargo = (
+            30000.0 if self.nivel_prioridad.lower() == "alta" else 0.0
+        )
+        return self.precio_base + recargo
+
+    def obtener_descripcion(self) -> str:
+        return f"Equipo: {self.equipo_mtto} | Prioridad: {self.nivel_prioridad}"
+
+
+class Reserva(EntidadBase):
+    """Clase que une al Cliente, el Servicio, la fecha y el estado."""
+
+    def __init__(
         self, id_reserva: int, servicio: Servicio, cliente: Cliente = None
     ):
-        super()._init_(id_reserva)
-        self.servicio = servicio  # Asocia el objeto servicio
-        self.cliente = (
-            cliente if cliente else Cliente(0)
-        )  # Asocia el cliente (o anónimo si no hay)
-        self.fecha_creacion = datetime.now()  # Guarda la fecha y hora exacta
-        self.estado = "Activa"  # Estado inicial de la reserva
-        self.costo_total = (
-            self.servicio.calcular_costo()
-        )  # Calcula el costo automático
+        super().__init__(id_reserva)
+        self.servicio = servicio
+        self.cliente = cliente if cliente else Cliente(0)
+        self.fecha_creacion = datetime.now()
+        self.estado = "Activa"
+        self.costo_total = self.servicio.calcular_costo()
 
     def cerrar_reserva(self):
-        """Cambia el estado de la reserva a 'Cerrada' de forma permanente en memoria."""
         if self.estado == "Cerrada":
             raise ReservaError("La reserva ya se encuentra cerrada.")
         self.estado = "Cerrada"
@@ -227,28 +233,22 @@ class Reserva(EntidadBase):
 # Interfaz Gráfica Tkinter
 # ----------------------------------------------------------------------
 class AplicacionSoftwareFJ:
-    """Clase principal que construye y controla la ventana gráfica."""
 
     def __init__(self, root):
         self.root = root
-        self.root.title("Software FJ - Sistema Integral de Gestión")  # Título
-        self.root.geometry("850x650")  # Tamaño de la ventana
-        self.root.configure(bg="#f4f6f9")  # Color de fondo general
+        self.root.title("Software FJ - Sistema Integral de Gestión")
+        self.root.geometry("880x680")
+        self.root.configure(bg="#f4f6f9")
 
-        self.lista_reservas = (
-            []
-        )  # Memoria temporal: lista donde se guardan los objetos creados
-        self.contador_id = 1  # Autoincrementable para el ID de cada reserva
+        self.lista_reservas = []
+        self.contador_id = 1
 
-        self._crear_interfaz()  # Llama al método que dibuja los elementos visuales
+        self._crear_interfaz()
 
     def _crear_interfaz(self):
-        """Construye todos los botones, campos y tablas de la ventana."""
-        # Franja superior para el nombre de la empresa
-        frame_header = tk.Frame(self.root, bg="#1e293b",)
+        frame_header = tk.Frame(self.root, bg="#1e293b")
         frame_header.pack(fill=tk.X, pady=15)
 
-        # Etiqueta con el nombre requerido: SOFTWARE FJ
         lbl_titulo = tk.Label(
             frame_header,
             text="SOFTWARE FJ",
@@ -260,21 +260,19 @@ class AplicacionSoftwareFJ:
 
         lbl_subtitulo = tk.Label(
             frame_header,
-            text="Sistema Integral de Gestión de Servicios y Reservas",
+            text="Sistema Integral de Gestión de Servicios y Mantenimiento",
             font=("Helvetica", 10),
             fg="#cbd5e1",
             bg="#1e293b",
         )
         lbl_subtitulo.pack()
 
-        # Contenedor principal de la interfaz
         main_frame = tk.Frame(self.root, bg="#f4f6f9", padx=15, pady=15)
         main_frame.pack(fill=tk.BOTH, expand=True)
 
-        # Cuadro de formulario para registrar datos
         lbl_frame_form = tk.LabelFrame(
             main_frame,
-            text=" Registrar Nueva Reserva ",
+            text=" Registrar Nueva Reserva o Servicio ",
             font=("Helvetica", 11, "bold"),
             bg="white",
             padx=15,
@@ -282,7 +280,6 @@ class AplicacionSoftwareFJ:
         )
         lbl_frame_form.pack(fill=tk.X, pady=(0, 15))
 
-        # Campo opcional: Nombre del cliente
         tk.Label(
             lbl_frame_form,
             text="Nombre Cliente (Opcional):",
@@ -292,7 +289,6 @@ class AplicacionSoftwareFJ:
         self.entry_cliente_nombre = tk.Entry(lbl_frame_form, width=30)
         self.entry_cliente_nombre.grid(row=0, column=1, padx=10, pady=5)
 
-        # Campo opcional: Documento del cliente
         tk.Label(
             lbl_frame_form,
             text="Documento (Opcional):",
@@ -302,30 +298,29 @@ class AplicacionSoftwareFJ:
         self.entry_cliente_doc = tk.Entry(lbl_frame_form, width=20)
         self.entry_cliente_doc.grid(row=0, column=3, padx=10, pady=5)
 
-        # Menú desplegable para elegir el tipo de servicio
         tk.Label(
             lbl_frame_form,
             text="Tipo de Servicio:",
             bg="white",
             font=("Helvetica", 9, "bold"),
         ).grid(row=1, column=0, sticky="w", pady=5)
+        
+        # Agregamos la nueva opción al Combobox
         self.combo_servicio = ttk.Combobox(
             lbl_frame_form,
             values=[
                 "Reserva de Sala",
                 "Alquiler de Equipos",
                 "Asesoría Especializada",
+                "Mantenimiento Preventivo",
             ],
             state="readonly",
             width=27,
         )
-        self.combo_servicio.current(0)  # Selecciona el primero por defecto
+        self.combo_servicio.current(0)
         self.combo_servicio.grid(row=1, column=1, padx=10, pady=5)
-        self.combo_servicio.bind(
-            "<<ComboboxSelected>>", self._actualizar_campos
-        )  # Evento al cambiar selección
+        self.combo_servicio.bind("<<ComboboxSelected>>", self._actualizar_campos)
 
-        # Etiquetas y cuadros dinámicos para los detalles del servicio 1
         self.lbl_detalle_1 = tk.Label(
             lbl_frame_form,
             text="Nº de Sala:",
@@ -337,7 +332,6 @@ class AplicacionSoftwareFJ:
         self.entry_detalle_1.grid(row=2, column=1, padx=10, pady=5)
         self.entry_detalle_1.insert(0, "Sala A-101")
 
-        # Etiquetas y cuadros dinámicos para los detalles del servicio 2
         self.lbl_detalle_2 = tk.Label(
             lbl_frame_form,
             text="Horas:",
@@ -349,10 +343,9 @@ class AplicacionSoftwareFJ:
         self.entry_detalle_2.grid(row=2, column=3, padx=10, pady=5)
         self.entry_detalle_2.insert(0, "2")
 
-        # Botón para guardar el registro en memoria
         btn_guardar = tk.Button(
             lbl_frame_form,
-            text="Guardar y Activar Reserva",
+            text="Guardar y Activar Registro",
             command=self._guardar_reserva,
             bg="#2563eb",
             fg="white",
@@ -363,10 +356,9 @@ class AplicacionSoftwareFJ:
         )
         btn_guardar.grid(row=3, column=0, columnspan=4, pady=10)
 
-        # Sección de la tabla visual (Treeview) para mostrar las reservas guardadas
         lbl_frame_tabla = tk.LabelFrame(
             main_frame,
-            text=" Reservas y Servicios Activos (Persistencia en Memoria) ",
+            text=" Registros Activos en Memoria ",
             font=("Helvetica", 11, "bold"),
             bg="white",
             padx=10,
@@ -374,19 +366,11 @@ class AplicacionSoftwareFJ:
         )
         lbl_frame_tabla.pack(fill=tk.BOTH, expand=True)
 
-        columnas = (
-            "ID",
-            "Cliente",
-            "Servicio",
-            "Detalles",
-            "Costo Total",
-            "Estado",
-        )
+        columnas = ("ID", "Cliente", "Servicio", "Detalles", "Costo Total", "Estado")
         self.tree = ttk.Treeview(
             lbl_frame_tabla, columns=columnas, show="headings"
         )
 
-        # Define los encabezados de las columnas de la tabla
         self.tree.heading("ID", text="ID")
         self.tree.heading("Cliente", text="Cliente")
         self.tree.heading("Servicio", text="Servicio")
@@ -394,27 +378,24 @@ class AplicacionSoftwareFJ:
         self.tree.heading("Costo Total", text="Costo ($)")
         self.tree.heading("Estado", text="Estado")
 
-        # Ajusta los anchos de las columnas en pantalla
         self.tree.column("ID", width=40, anchor="center")
         self.tree.column("Cliente", width=160)
-        self.tree.column("Servicio", width=150)
+        self.tree.column("Servicio", width=160)
         self.tree.column("Detalles", width=220)
         self.tree.column("Costo Total", width=90, anchor="e")
         self.tree.column("Estado", width=80, anchor="center")
 
         self.tree.pack(fill=tk.BOTH, expand=True, side=tk.LEFT)
 
-        # Barra de desplazamiento para la tabla
         scrollbar = ttk.Scrollbar(
             lbl_frame_tabla, orient=tk.VERTICAL, command=self.tree.yview
         )
         self.tree.configure(yscroll=scrollbar.set)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-        # Botón para cerrar/finalizar la reserva seleccionada
         btn_cerrar = tk.Button(
             main_frame,
-            text="Cerrar/Finalizar Reserva Seleccionada",
+            text="Cerrar/Finalizar Registro Seleccionado",
             command=self._cerrar_reserva,
             bg="#dc2626",
             fg="white",
@@ -425,7 +406,6 @@ class AplicacionSoftwareFJ:
         btn_cerrar.pack(fill=tk.X, pady=(10, 0))
 
     def _actualizar_campos(self, event=None):
-        """Cambia los textos de los campos de acuerdo al servicio que el usuario elija."""
         servicio = self.combo_servicio.get()
         self.entry_detalle_1.delete(0, tk.END)
         self.entry_detalle_2.delete(0, tk.END)
@@ -445,13 +425,16 @@ class AplicacionSoftwareFJ:
             self.lbl_detalle_2.config(text="Horas:")
             self.entry_detalle_1.insert(0, "Arquitectura de Software")
             self.entry_detalle_2.insert(0, "3")
+        elif servicio == "Mantenimiento Preventivo":
+            self.lbl_detalle_1.config(text="Equipo a revisar:")
+            self.lbl_detalle_2.config(text="Prioridad (Normal/Alta):")
+            self.entry_detalle_1.insert(0, "Tablero PLC S7-1200")
+            self.entry_detalle_2.insert(0, "Alta")
 
     def _guardar_reserva(self):
-        """Bloque Try/Except para capturar errores, crear objetos y guardarlos permanentemente en memoria."""
         try:
             nombre_cliente = self.entry_cliente_nombre.get()
             doc_cliente = self.entry_cliente_doc.get()
-            # Si los campos del cliente están vacíos, se crea como None (Cliente Opcional)
             cliente_obj = (
                 Cliente(self.contador_id, nombre_cliente, doc_cliente)
                 if nombre_cliente or doc_cliente
@@ -463,59 +446,42 @@ class AplicacionSoftwareFJ:
             val2 = self.entry_detalle_2.get()
 
             if not val1 or not val2:
-                raise ValidacionError(
-                    "Todos los campos del servicio son obligatorios."
-                )
+                raise ValidacionError("Todos los campos del servicio son obligatorios.")
 
-            # Instanciación polimórfica según la selección del usuario
             if tipo_servicio == "Reserva de Sala":
                 if not val2.isdigit():
                     raise ValidacionError("Las horas deben ser un número entero.")
-                servicio_obj = ReservaSala(
-                    numero_sala=val1, horas=int(val2)
-                )
+                servicio_obj = ReservaSala(numero_sala=val1, horas=int(val2))
 
             elif tipo_servicio == "Alquiler de Equipos":
                 if not val2.isdigit():
-                    raise ValidacionError(
-                        "La cantidad debe ser un número entero."
-                    )
-                servicio_obj = AlquilerEquipos(
-                    tipo_equipo=val1, cantidad=int(val2)
-                )
+                    raise ValidacionError("La cantidad debe ser un número entero.")
+                servicio_obj = AlquilerEquipos(tipo_equipo=val1, cantidad=int(val2))
 
             elif tipo_servicio == "Asesoría Especializada":
                 if not val2.isdigit():
                     raise ValidacionError("Las horas deben ser un número entero.")
-                servicio_obj = AsesoriaEspecializada(
-                    area=val1, horas_asesoria=int(val2)
-                )
+                servicio_obj = AsesoriaEspecializada(area=val1, horas_asesoria=int(val2))
 
-            # Crea el objeto reserva principal y lo añade a la lista en memoria RAM
+            elif tipo_servicio == "Mantenimiento Preventivo":
+                servicio_obj = MantenimientoPreventivo(equipo_mtto=val1, nivel_prioridad=val2)
+
             reserva = Reserva(self.contador_id, servicio_obj, cliente_obj)
             self.lista_reservas.append(reserva)
             self.contador_id += 1
 
-            logging.info(
-                f"Reserva #{reserva.id_entidad} guardada con éxito para: {reserva.cliente}"
-            )
-            self._refrescar_tabla()  # Actualiza la tabla visual
-            messagebox.showinfo(
-                "Éxito",
-                f"Reserva #{reserva.id_entidad} registrada y guardada exitosamente.",
-            )
+            logging.info(f"Registro #{reserva.id_entidad} guardado con éxito.")
+            self._refrescar_tabla()
+            messagebox.showinfo("Éxito", f"Registro #{reserva.id_entidad} guardado exitosamente.")
 
         except (ValidacionError, ReservaError) as e:
-            logging.warning(
-                f"Error de validación/negocio al guardar reserva: {e}"
-            )
+            logging.warning(f"Error de validación: {e}")
             messagebox.showerror("Error de Datos", str(e))
         except Exception as e:
-            logging.error(f"Error inesperado del sistema: {e}", exc_info=True)
+            logging.error(f"Error inesperado: {e}", exc_info=True)
             messagebox.showerror("Error Crítico", f"Ocurrió un error: {e}")
 
     def _refrescar_tabla(self):
-        """Limpia la tabla visual y vuelve a cargar todos los objetos de la lista en memoria."""
         for row in self.tree.get_children():
             self.tree.delete(row)
 
@@ -534,46 +500,28 @@ class AplicacionSoftwareFJ:
             )
 
     def _cerrar_reserva(self):
-        """Busca la reserva seleccionada en la tabla y la marca como cerrada."""
         seleccion = self.tree.selection()
         if not seleccion:
-            messagebox.showwarning(
-                "Advertencia", "Por favor seleccione una reserva de la lista."
-            )
+            messagebox.showwarning("Advertencia", "Por favor seleccione un registro de la lista.")
             return
 
         item = self.tree.item(seleccion)
         reserva_id = item["values"][0]
 
         try:
-            # Busca el objeto en la lista usando su ID
-            reserva = next(
-                (r for r in self.lista_reservas if r.id_entidad == reserva_id),
-                None,
-            )
+            reserva = next((r for r in self.lista_reservas if r.id_entidad == reserva_id), None)
             if reserva:
-                reserva.cerrar_reserva()  # Ejecuta el cierre del servicio
-                logging.info(f"Reserva #{reserva_id} fue cerrada.")
+                reserva.cerrar_reserva()
+                logging.info(f"Registro #{reserva_id} fue cerrado.")
                 self._refrescar_tabla()
-                messagebox.showinfo(
-                    "Reserva Cerrada",
-                    f"La reserva #{reserva_id} ha sido finalizada correctamente.",
-                )
+                messagebox.showinfo("Cerrado", f"El registro #{reserva_id} ha sido finalizado correctamente.")
         except ReservaError as e:
-            logging.warning(f"Error al cerrar la reserva #{reserva_id}: {e}")
             messagebox.showerror("Error", str(e))
         except Exception as e:
-            logging.error(f"Error inesperado al cerrar reserva: {e}")
-            messagebox.showerror("Error", f"No se pudo cerrar la reserva: {e}")
+            messagebox.showerror("Error", f"No se pudo cerrar: {e}")
 
 
-# ----------------------------------------------------------------------
-# Punto de entrada de la aplicación
-# ----------------------------------------------------------------------
 if __name__ == "__main__":
-    print("Iniciando aplicacion")
-    root = tk.Tk()  # Crea la ventana raíz de Tkinter
-    print("ventana raiz")
-    app = AplicacionSoftwareFJ(root)  # Instancia la clase principal de la aplicación
+    root = tk.Tk()
+    app = AplicacionSoftwareFJ(root)
     root.mainloop()
-    print("aplicacion cerrada")
